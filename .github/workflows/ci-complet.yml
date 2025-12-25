@@ -1,0 +1,64 @@
+name: CI complet
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Afficher l’OS
+        run: uname -a
+
+      # === Terraform ===
+      - name: Installer Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform plan
+        run: terraform -chdir=terraform plan
+
+      # === Ansible ===
+      - name: Installer Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Vérifier la version Ansible
+        run: ansible --version
+
+      # Exemple de playbook si tu as un inventaire
+      # - name: Lancer playbook Ansible
+      #   run: ansible-playbook -i inventory.ini playbook.yml
+
+      # === Build artefact (exemple) ===
+      - name: Installer Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo usermod -aG docker $USER || true
+
+      - name: Build image Docker de test
+        run: |
+          docker build -t demo-ci:latest .
+
+      # === Nexus (placeholder) ===
+      # Ici tu pousseras ton image vers Nexus quand tu auras un Nexus dispo
+      # - name: Login Nexus
+      #   run: docker login <URL_NEXUS> -u ${{ secrets.NEXUS_USER }} -p ${{ secrets.NEXUS_PASSWORD }}
+      #
+      # - name: Push image vers Nexus
+      #   run: docker push <URL_NEXUS>/demo-ci:latest
+
+      # === Fin de job ===
+      - name: Fin de pipeline
+        run: echo "Pipeline CI complet OK"
